@@ -148,6 +148,9 @@ for col in numeric_df.columns:
     # ----------------------------------------------------
     # VISUAL 4: SCATTER PLOT (Correlation & Distribution)
     # ----------------------------------------------------
+    # ----------------------------------------------------
+    # VISUAL 4: SCATTER PLOT (Correlation & Distribution)
+    # ----------------------------------------------------
     if len(numeric_cols) >= 2:
         st.markdown("---")
         st.markdown("### 🎯 4. Scatter Plot (Variable Interaction & Correlations)")
@@ -160,4 +163,20 @@ for col in numeric_df.columns:
         
         t1, t2 = st.tabs(["📊 Power BI Setup Blueprint", "🐍 Python Snippet"])
         with t1:
-            st.markdown(f"**Visual Type:** Scatter Chart\n* **X Axis:** `{s_x}` (Click arrow -> Select **Don't Summarize**)\n
+            powerbi_blueprint = f"""**Visual Type:** Scatter Chart
+* **X Axis:** `{s_x}` (Click arrow -> Select **Don't Summarize**)
+* **Y Axis:** `{s_y}` (Click arrow -> Select **Don't Summarize**)
+* **Legend:** `{s_color if s_color else 'Leave Empty'}`"""
+            st.markdown(powerbi_blueprint)
+            
+        with t2:
+            color_argument = f"color='{s_color}', " if s_color else ""
+            python_scatter_code = f"""```python
+import pandas as pd
+import plotly.express as px
+
+df = pd.read_csv('{uploaded_file.name}')
+fig = px.scatter(df, x='{s_x}', y='{s_y}', {color_argument}title='Scatter Plot Matrix')
+fig.show()
+```"""
+            st.markdown(python_scatter_code)
