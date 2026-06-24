@@ -230,3 +230,32 @@ fig.show()
         t1, t2 = st.tabs(["📊 Power BI Setup Blueprint", "🐍 Python Snippet"])
         with t1:
             st.markdown(f"**Visual Type:** Column Chart with Bins\n1. Right-click `{h_val}` -> **New group**.\n2. Set **Group type** to **Bins**.\n3. Drag the Binned column to the **X-Axis** and the original column (Set to **Count**) to the **Y-Axis**.")
+        with t2:
+            st.markdown(f"```python\nfig = px.histogram(df, x='{h_val}', marginal='box')\nfig.show()\n```")
+
+    # VISUAL 6: TREEMAP
+    if len(categorical_cols) >= 2 and len(numeric_cols) > 0:
+        st.markdown("---")
+        st.markdown("### 🧱 6. Treemap (Hierarchical Category Matrix)")
+        t_parent = st.selectbox("Select Parent Category", categorical_cols, index=0, key="v6_p")
+        t_child = st.selectbox("Select Child Category", categorical_cols, index=min(1, len(categorical_cols)-1), key="v6_c")
+        t_size = st.selectbox("Weight Determined By", numeric_cols, key="v6_s")
+        
+        fig6 = px.treemap(active_df, path=[t_parent, t_child], values=t_size, title=f"Hierarchy Matrix: {t_parent} -> {t_child}")
+        st.plotly_chart(fig6, use_container_width=True)
+        
+        t1, t2 = st.tabs(["📊 Power BI Setup Blueprint", "🐍 Python Snippet"])
+        with t1:
+            st.markdown(f"**Visual Type:** Treemap\n* **Category:** Drag `{t_parent}` first, then `{t_child}` right underneath it.\n* **Values:** `{t_size}`")
+        with t2:
+            st.markdown(f"```python\nfig = px.treemap(df, path=['{t_parent}', '{t_child}'], values='{t_size}')\nfig.show()\n```")
+
+    # VISUAL 7: BOX PLOT
+    if len(categorical_cols) > 0 and len(numeric_cols) > 0:
+        st.markdown("---")
+        st.markdown("### 📦 7. Box & Whisker Plot (Statistical Spread)")
+        box_cat = st.selectbox("Group Spread Across Categories (X)", categorical_cols, key="v7_x")
+        box_num = st.selectbox("Analyze Variance of (Y)", numeric_cols, key="v7_y")
+        
+        fig7 = px.box(active_df, x=box_cat, y=box_num, points="all", title=f"Quartile Spread of {box_num} by {box_cat}", template="plotly_white")
+        st.plotly_chart(fig7, use_container_
