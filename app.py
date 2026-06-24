@@ -106,6 +106,7 @@ if uploaded_file is not None:
     # VISUAL 4: SCATTER PLOT (Correlation & Distribution)
     # ----------------------------------------------------
     if len(numeric_cols) >= 2:
+        if len(numeric_cols) >= 2:
         st.markdown("---")
         st.markdown("### 🎯 4. Scatter Plot (Variable Interaction & Correlations)")
         s_x = st.selectbox("Select X-Axis Variable", numeric_cols, index=0, key="v4_x")
@@ -119,8 +120,17 @@ if uploaded_file is not None:
         with t1:
             st.markdown(f"**Visual Type:** Scatter Chart\n* **X Axis:** `{s_x}` (Click arrow -> Select **Don't Summarize**)\n* **Y Axis:** `{s_y}` (Click arrow -> Select **Don't Summarize**)\n* **Legend:** `{s_color if s_color else 'Leave Empty'}`")
         with t2:
-            st.markdown(f"```python\nfig = px.scatter(df, x='{s_x}', y='{s_y}', {f\"color='{s_color}',\" if s_color else \"\"} title='Scatter Plot Matrix')\nfig.show()\n```")
+            # Clean string building to prevent f-string quoting conflicts
+            color_argument = f"color='{s_color}', " if s_color else ""
+            python_scatter_code = f"""```python
+import pandas as pd
+import plotly.express as px
 
+df = pd.read_csv('{uploaded_file.name}')
+fig = px.scatter(df, x='{s_x}', y='{s_y}', {color_argument}title='Scatter Plot Matrix')
+fig.show()
+```"""
+            st.markdown(python_scatter_code)
     # ----------------------------------------------------
     # VISUAL 5: HISTOGRAM (Numeric Density/Distribution Frequency)
     # ----------------------------------------------------
