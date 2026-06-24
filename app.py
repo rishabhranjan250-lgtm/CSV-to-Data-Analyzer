@@ -43,9 +43,52 @@ if uploaded_file is not None:
     with st.expander("📝 View Raw Data Preview (Top 10 Rows)"):
         st.dataframe(df.head(10), use_container_width=True)
 
-    # --- SECTION 2: THE COMPREHENSIVE VISUALIZATION ENGINES ---
+    # --- NEW SECTION: FULL PYTHON ENVIRONMENT SCRIPTS ---
     st.markdown("---")
-    st.header("📊 2. Master Visualization Suite & Code Blueprints")
+    st.header("🐍 2. Full Python Jupyter Notebook Pipeline")
+    st.write("If you want to move beyond basic charts and perform a professional, end-to-end Exploratory Data Analysis (EDA) in Python, copy the script block below.")
+    
+    python_pipeline_code = f"""```python
+import pandas as pd
+import numpy as np
+import plotly.express as px
+
+# 1. Load the uploaded dataset
+df = pd.read_csv('{uploaded_file.name}')
+
+print("--- DATASET SUMMARY ---")
+print(df.info())
+
+print("\\n--- DESCRIPTIVE STATISTICS ---")
+print(df.describe(include='all').T)
+
+# 2. Automated Missing Value Handling
+missing_data = df.isnull().sum()
+print("\\n--- MISSING VALUES PER COLUMN ---")
+print(missing_data[missing_data > 0])
+
+# 3. Correlation Matrix (For all numerical metrics)
+numeric_df = df.select_dtypes(include=['number'])
+if not numeric_df.empty:
+    print("\\n--- CORRELATION MATRIX ---")
+    print(numeric_df.corr())
+    
+# 4. Outlier Detection using IQR Method
+print("\\n--- OUTLIER IDENTIFICATION ---")
+for col in numeric_df.columns:
+    q1 = df[col].quantile(0.25)
+    q3 = df[col].quantile(0.75)
+    iqr = q3 - q1
+    lower_bound = q1 - (1.5 * iqr)
+    upper_bound = q3 + (1.5 * iqr)
+    outliers = df[(df[col] < lower_bound) | (df[col] > upper_bound)].shape[0]
+    print(f"Column '{{col}}' has {{outliers}} potential extreme outliers.")
+```"""
+    st.markdown(python_pipeline_code)
+
+    # --- SECTION 3: THE COMPREHENSIVE VISUALIZATION ENGINES ---
+    st.markdown("---")
+    st.header("📊 3. Master Visualization Suite & Code Blueprints")
     st.write("Browse through every layout option matching your dataset below. Switch tabs under each chart to pull execution code.")
 
     # ----------------------------------------------------
@@ -105,9 +148,6 @@ if uploaded_file is not None:
     # ----------------------------------------------------
     # VISUAL 4: SCATTER PLOT (Correlation & Distribution)
     # ----------------------------------------------------
-   # ----------------------------------------------------
-    # VISUAL 4: SCATTER PLOT (Correlation & Distribution)
-    # ----------------------------------------------------
     if len(numeric_cols) >= 2:
         st.markdown("---")
         st.markdown("### 🎯 4. Scatter Plot (Variable Interaction & Correlations)")
@@ -132,6 +172,7 @@ fig = px.scatter(df, x='{s_x}', y='{s_y}', {color_argument}title='Scatter Plot M
 fig.show()
 ```"""
             st.markdown(python_scatter_code)
+
     # ----------------------------------------------------
     # VISUAL 5: HISTOGRAM (Numeric Density/Distribution Frequency)
     # ----------------------------------------------------
@@ -164,4 +205,27 @@ fig.show()
         
         t1, t2 = st.tabs(["📊 Power BI Setup Blueprint", "🐍 Python Snippet"])
         with t1:
-            st.markdown(f"** using the sidebar or the box above to generate your dashboard.")
+            st.markdown(f"**Visual Type:** Treemap\n* **Category:** Drag `{t_parent}` first, then drag `{t_child}` right underneath it inside the same Category bucket.\n* **Values:** `{t_size}`")
+        with t2:
+            st.markdown(f"```python\nfig = px.treemap(df, path=['{t_parent}', '{t_child}'], values='{t_size}')\nfig.show()\n```")
+
+    # ----------------------------------------------------
+    # VISUAL 7: BOX PLOT (Statistical Summary)
+    # ----------------------------------------------------
+    if len(categorical_cols) > 0 and len(numeric_cols) > 0:
+        st.markdown("---")
+        st.markdown("### 📦 7. Box & Whisker Plot (Statistical Spread / Percentiles)")
+        box_cat = st.selectbox("Group Spread Across Categories (X)", categorical_cols, key="v7_x")
+        box_num = st.selectbox("Analyze Variance of Numeric Target (Y)", numeric_cols, key="v7_y")
+        
+        fig7 = px.box(df, x=box_cat, y=box_num, points="all", title=f"Statistical Quartile Distribution of {box_num} across {box_cat}", template="plotly_white")
+        st.plotly_chart(fig7, use_container_width=True)
+        
+        t1, t2 = st.tabs(["📊 Power BI Setup Blueprint", "🐍 Python Snippet"])
+        with t1:
+            st.markdown(f"**Visual Type:** Box and Whisker plot\n* **Category:** `{box_cat}`\n* **Y Axis:** `{box_num}`")
+        with t2:
+            st.markdown(f"```python\nfig = px.box(df, x='{box_cat}', y='{box_num}', points='all')\nfig.show()\n```")
+
+else:
+    st.info("💡 Drop a `.csv` dataset file above to unlock the 7 automated visualization engines.")
