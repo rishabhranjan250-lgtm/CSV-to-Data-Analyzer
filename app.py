@@ -3,137 +3,154 @@ import pandas as pd
 import plotly.express as px
 import io
 
-# Set page config
-st.set_page_config(page_title="CSV to Power BI Insights", layout="wide", page_icon="📊")
+# Page Configuration
+st.set_page_config(page_title="Ultimate Power BI & Python Code Engine", layout="wide", page_icon="🚀")
 
-st.title("📊 CSV Automated Insights & Power BI Guide")
-st.subheader("Upload your dataset to get instant insights and Power BI blueprints.")
+st.title("🚀 The Ultimate Automated Analytics & Code Engine")
+st.subheader("Upload any CSV to automatically generate every possible visualization, Power BI blueprint, and Python script.")
 
-# File Uploader
-uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
+uploaded_file = st.file_uploader("Upload your dataset (CSV format)", type="csv")
 
 if uploaded_file is not None:
-    # Read Data
+    # 1. READ & PREPROCESS DATA
     df = pd.read_csv(uploaded_file)
+    file_name = uploaded_file.name.split('.')[0]
     
-    # Session state to keep track of columns
+    # Try converting object columns to datetime if they look like dates
+    for col in df.columns:
+        if df[col].dtype == 'object':
+            try:
+                df[col] = pd.to_datetime(df[col], errors='ignore')
+            except:
+                pass
+
+    # Separate Column Types
     numeric_cols = df.select_dtypes(include=['number']).columns.tolist()
     categorical_cols = df.select_dtypes(include=['object', 'category']).columns.tolist()
-    date_cols = df.select_dtypes(include=['datetime', 'object']).columns.tolist() # Basic guess
+    date_cols = df.select_dtypes(include=['datetime', 'datetime64']).columns.tolist()
     
-    # --- SECTION 1: DATA PREVIEW ---
-    st.header("👀 1. Dataset Preview")
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Total Rows", df.shape[0])
-    col2.metric("Total Columns", df.shape[1])
-    col3.metric("Missing Values", df.isna().sum().sum())
+    # Fallback if no dates detected natively
+    all_potential_time_cols = date_cols + [c for c in categorical_cols if 'year' in c.lower() or 'date' in c.lower() or 'month' in c.lower()]
+
+    # --- SECTION 1: DATA PROFILE METRICS ---
+    st.header("📋 1. Dataset Profile & Dimensions")
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("Total Rows / Records", f"{df.shape[0]:,}")
+    m2.metric("Total Fields / Columns", df.shape[1])
+    m3.metric("Numeric Fields", len(numeric_cols))
+    m4.metric("Categorical/Text Fields", len(categorical_cols))
     
-    st.dataframe(df.head(10), use_container_width=True)
-    
-    # --- SECTION 2: AUTOMATED INSIGHTS ---
+    with st.expander("📝 View Raw Data Preview (Top 10 Rows)"):
+        st.dataframe(df.head(10), use_container_width=True)
+
+    # --- SECTION 2: THE COMPREHENSIVE VISUALIZATION ENGINES ---
     st.markdown("---")
-    st.header("💡 2. Quick Automated Insights")
-    
-    with st.expander("View Column Summary & Types", expanded=True):
-        buffer = io.StringIO()
-        df.info(buf=buffer)
-        st.text(buffer.getvalue())
+    st.header("📊 2. Master Visualization Suite & Code Blueprints")
+    st.write("Browse through every layout option matching your dataset below. Switch tabs under each chart to pull execution code.")
 
-    if len(numeric_cols) > 0:
-        st.subheader("Key Numerical Statistics")
-        st.dataframe(df.describe().T, use_container_width=True)
-        
-        # High-level insight generation
-        st.markdown("**Top Data Discoveries:**")
-        for col in numeric_cols[:3]: # Limit to top 3 for brevity
-            max_val = df[col].max()
-            min_val = df[col].min()
-            mean_val = df[col].mean()
-            st.write(f"* **{col}**: Ranges from `{min_val}` to `{max_val}` with an average of `{mean_val:,.2f}`.")
-            
-    if len(categorical_cols) > 0:
-        st.markdown("**Top Categorical Breakdowns:**")
-        for col in categorical_cols[:2]:
-            top_val = df[col].mode()[0]
-            count_top = df[col].value_counts().iloc[0]
-            st.write(f"* **{col}**: The most frequent category is `{top_val}` appearing `{count_top}` times.")
-
-    # --- SECTION 3: VISUALIZATIONS & POWER BI BLUEPRINTS ---
-    st.markdown("---")
-    st.header("📈 3. Generated Charts & Power BI Blueprints")
-    st.write("Below are interactive previews of charts along with instructions/DAX codes to recreate them in Power BI.")
-
-    # Chart 1: Bar Chart (Categorical vs Numeric)
+    # ----------------------------------------------------
+    # VISUAL 1: BAR CHART (Categorical Comparison)
+    # ----------------------------------------------------
     if len(categorical_cols) > 0 and len(numeric_cols) > 0:
-        st.subheader("Chart Type: Bar Chart (Distribution / Comparison)")
-        cat_choice = st.selectbox("Select Categorical Axis (X)", categorical_cols, key="bar_cat")
-        num_choice = st.selectbox("Select Numeric Value (Y)", numeric_cols, key="bar_num")
+        st.markdown("### 📈 1. Clustered Column / Bar Chart (Group Comparisons)")
+        c_x = st.selectbox("Select Dimension (X-Axis)", categorical_cols, key="v1_x")
+        c_y = st.selectbox("Select Aggregation Value (Y-Axis)", numeric_cols, key="v1_y")
         
-        # Aggregate data for clean charting
-        chart_data = df.groupby(cat_choice)[num_choice].sum().reset_index()
+        fig1 = px.bar(df, x=c_x, y=c_y, title=f"Total {c_y} by {c_x}", color=c_x, template="plotly_white")
+        st.plotly_chart(fig1, use_container_width=True)
         
-        # Plotly Preview
-        fig_bar = px.bar(chart_data, x=cat_choice, y=num_choice, title=f"Total {num_choice} by {cat_choice}")
-        st.plotly_chart(fig_bar, use_container_width=True)
-        
-        # Power BI Recipe
-        with st.expander("👉 Click to get Power BI Setup Blueprint"):
-            st.markdown(f"""
-            ### **How to build this in Power BI Desktop:**
-            1. Click on the **Stacked Bar Chart** or **Clustered Column Chart** icon in the Visualizations pane.
-            2. **Y-Axis (or X-Axis if horizontal):** Drag and drop your `[{cat_choice}]` column.
-            3. **X-Axis (or Y-Axis if horizontal):** Drag and drop your `[{num_choice}]` column.
-            4. Set the aggregation to **Sum** (default) or **Average** in the fields drop-down.
-            
-            ### **DAX Measure Code (Optional - for advanced dynamic calculation):**
-            If you want to use a formal measure instead of dropping the raw column, create this measure:
-            ```dax
-            Total_{num_choice.replace(' ', '_')} = SUM('{uploaded_file.name.split(".")[0]}'[{num_choice}])
-            ```
-            """)
+        t1, t2 = st.tabs(["📊 Power BI Setup Blueprint", "🐍 Python Snippet"])
+        with t1:
+            st.markdown(f"**Visual Type:** Clustered Column Chart\n* **X-Axis:** `{c_x}`\n* **Y-Axis:** `{c_y}` (Set to **Sum** or **Average**)\n\n**DAX Measure:**\n```dax\nTotal_{c_y.replace(' ', '_')} = SUM('{file_name}'[{c_y}])\n```")
+        with t2:
+            st.markdown(f"```python\nimport pandas as pd\nimport plotly.express as px\n\ndf = pd.read_csv('{uploaded_file.name}')\nfig = px.bar(df, x='{c_x}', y='{c_y}', title='Total {c_y} by {c_x}', color='{c_x}')\nfig.show()\n```")
 
-    # Chart 2: Line Chart (Trend Analysis)
-    if len(numeric_cols) > 0:
-        st.subheader("Chart Type: Line Chart (Trends)")
+    # ----------------------------------------------------
+    # VISUAL 2: LINE CHART (Temporal Trend Analysis)
+    # ----------------------------------------------------
+    if len(all_potential_time_cols) > 0 and len(numeric_cols) > 0:
+        st.markdown("---")
+        st.markdown("### 📉 2. Line Chart (Trend Analysis / Time-Series)")
+        t_x = st.selectbox("Select Time/Sequence Axis (X-Axis)", all_potential_time_cols, key="v2_x")
+        t_y = st.selectbox("Select Performance Metric (Y-Axis)", numeric_cols, key="v2_y")
         
-        # If there's a suspected date column or just use index/another numeric
-        x_trend = st.selectbox("Select X-Axis (Time/Sequence)", date_cols + numeric_cols, key="line_x")
-        y_trend = st.selectbox("Select Y-Axis (Value)", numeric_cols, key="line_y")
+        df_sorted = df.sort_values(by=t_x)
+        fig2 = px.line(df_sorted, x=t_x, y=t_y, title=f"Movement of {t_y} over {t_x}", template="plotly_white")
+        st.plotly_chart(fig2, use_container_width=True)
         
-        fig_line = px.line(df.sort_values(by=x_trend), x=x_trend, y=y_trend, title=f"Trend of {y_trend} over {x_trend}")
-        st.plotly_chart(fig_line, use_container_width=True)
-        
-        with st.expander("👉 Click to get Power BI Setup Blueprint"):
-            st.markdown(f"""
-            ### **How to build this in Power BI Desktop:**
-            1. Click on the **Line Chart** icon in the Visualizations pane.
-            2. **X-Axis:** Drag and drop `[{x_trend}]`. *(If it's a date, Power BI will automatically create a Date Hierarchy).*
-            3. **Y-Axis:** Drag and drop `[{y_trend}]`.
-            
-            ### **Power Query M-Code (To ensure correct Date/Time data type):**
-            Go to Home > Transform Data, select your column, and change data type to **Date**. The M code generated looks like this:
-            ```powerquery
-            = Table.TransformColumnTypes(#"Changed Type", {{"{x_trend}", type date}})
-            ```
-            """)
+        t1, t2 = st.tabs(["📊 Power BI Setup Blueprint", "🐍 Python Snippet"])
+        with t1:
+            st.markdown(f"**Visual Type:** Line Chart\n* **X-Axis:** `{t_x}` (Power BI will automatically build a Date Hierarchy)\n* **Y-Axis:** `{t_y}`\n\n**Power Query Step:** Ensure Type is Date:\n```powerquery\n= Table.TransformColumnTypes(#\"Changed Type\",{{\"{t_x}\", type date}})\n```")
+        with t2:
+            st.markdown(f"```python\ndf = pd.read_csv('{uploaded_file.name}')\ndf['{t_x}'] = pd.to_datetime(df['{t_x}'], errors='coerce')\ndf = df.sort_values('{t_x}')\nfig = px.line(df, x='{t_x}', y='{t_y}', title='Trend over Time')\nfig.show()\n```")
 
-    # Chart 3: Scatter Plot (Correlation)
+    # ----------------------------------------------------
+    # VISUAL 3: PIE / DONUT CHART (Composition Breakdown)
+    # ----------------------------------------------------
+    if len(categorical_cols) > 0 and len(numeric_cols) > 0:
+        st.markdown("---")
+        st.markdown("### 🍩 3. Donut / Pie Chart (Part-to-Whole Share)")
+        p_slice = st.selectbox("Select Category Split (Legend)", categorical_cols, key="v3_slice")
+        p_val = st.selectbox("Select Size Value", numeric_cols, key="v3_val")
+        
+        fig3 = px.pie(df, names=p_slice, values=p_val, hole=0.4, title=f"Composition Share of {p_val} by {p_slice}")
+        st.plotly_chart(fig3, use_container_width=True)
+        
+        t1, t2 = st.tabs(["📊 Power BI Setup Blueprint", "🐍 Python Snippet"])
+        with t1:
+            st.markdown(f"**Visual Type:** Donut Chart\n* **Legend:** `{p_slice}`\n* **Values:** `{p_val}`")
+        with t2:
+            st.markdown(f"```python\nfig = px.pie(df, names='{p_slice}', values='{p_val}', hole=0.4, title='Composition share')\nfig.show()\n```")
+
+    # ----------------------------------------------------
+    # VISUAL 4: SCATTER PLOT (Correlation & Distribution)
+    # ----------------------------------------------------
     if len(numeric_cols) >= 2:
-        st.subheader("Chart Type: Scatter Plot (Correlation Analysis)")
-        scat_x = st.selectbox("Select X Variable", numeric_cols, index=0, key="scat_x")
-        scat_y = st.selectbox("Select Y Variable", numeric_cols, index=min(1, len(numeric_cols)-1), key="scat_y")
+        st.markdown("---")
+        st.markdown("### 🎯 4. Scatter Plot (Variable Interaction & Correlations)")
+        s_x = st.selectbox("Select X-Axis Variable", numeric_cols, index=0, key="v4_x")
+        s_y = st.selectbox("Select Y-Axis Variable", numeric_cols, index=min(1, len(numeric_cols)-1), key="v4_y")
+        s_color = st.selectbox("Group / Color Code points by:", [None] + categorical_cols, key="v4_c")
         
-        fig_scatter = px.scatter(df, x=scat_x, y=scat_y, title=f"Correlation between {scat_x} and {scat_y}")
-        st.plotly_chart(fig_scatter, use_container_width=True)
+        fig4 = px.scatter(df, x=s_x, y=s_y, color=s_color, title=f"Correlation Vector: {s_x} vs {s_y}", template="plotly_white")
+        st.plotly_chart(fig4, use_container_width=True)
         
-        with st.expander("👉 Click to get Power BI Setup Blueprint"):
-            st.markdown(f"""
-            ### **How to build this in Power BI Desktop:**
-            1. Click on the **Scatter Chart** icon in the Visualizations pane.
-            2. **X Axis:** Drag `[{scat_x}]`. Click the down arrow next to it and select **Don't Summarize**.
-            3. **Y Axis:** Drag `[{scat_y}]`. Click the down arrow next to it and select **Don't Summarize**.
-            4. *(Optional)* Drag a categorical column into the **Values** or **Legend** bucket to separate the dots.
-            """)
-            
-else:
-    st.info("ℹ️ Please upload a CSV file using the sidebar or the box above to generate your dashboard.")
+        t1, t2 = st.tabs(["📊 Power BI Setup Blueprint", "🐍 Python Snippet"])
+        with t1:
+            st.markdown(f"**Visual Type:** Scatter Chart\n* **X Axis:** `{s_x}` (Click arrow -> Select **Don't Summarize**)\n* **Y Axis:** `{s_y}` (Click arrow -> Select **Don't Summarize**)\n* **Legend:** `{s_color if s_color else 'Leave Empty'}`")
+        with t2:
+            st.markdown(f"```python\nfig = px.scatter(df, x='{s_x}', y='{s_y}', {f\"color='{s_color}',\" if s_color else \"\"} title='Scatter Plot Matrix')\nfig.show()\n```")
+
+    # ----------------------------------------------------
+    # VISUAL 5: HISTOGRAM (Numeric Density/Distribution Frequency)
+    # ----------------------------------------------------
+    if len(numeric_cols) > 0:
+        st.markdown("---")
+        st.markdown("### 📊 5. Histogram (Data Density & Outlier Detection)")
+        h_val = st.selectbox("Select Numerical Target for Sizing Tiers", numeric_cols, key="v5_h")
+        
+        fig5 = px.histogram(df, x=h_val, marginal="box", title=f"Frequency Concentration of {h_val}", template="plotly_white")
+        st.plotly_chart(fig5, use_container_width=True)
+        
+        t1, t2 = st.tabs(["📊 Power BI Setup Blueprint", "🐍 Python Snippet"])
+        with t1:
+            st.markdown(f"**Visual Type:** Normal Column Chart combined with Data Groups\n1. In the Fields list, right-click `{h_val}` and choose **New group**.\n2. Set **Group type** to **Bins** and choose your Bin Size.\n3. Drag the new Binned column to the **X-Axis** and the original `{h_val}` (Set aggregation to **Count**) to the **Y-Axis**.")
+        with t2:
+            st.markdown(f"```python\nfig = px.histogram(df, x='{h_val}', marginal='box', title='Distribution Curve')\nfig.show()\n```")
+
+    # ----------------------------------------------------
+    # VISUAL 6: TREEMAP (Hierarchical Structuring)
+    # ----------------------------------------------------
+    if len(categorical_cols) >= 2 and len(numeric_cols) > 0:
+        st.markdown("---")
+        st.markdown("### 🧱 6. Treemap (Hierarchical Category Matrix)")
+        t_parent = st.selectbox("Select Top-Level Category (Parent)", categorical_cols, index=0, key="v6_p")
+        t_child = st.selectbox("Select Sub-Category (Child)", categorical_cols, index=min(1, len(categorical_cols)-1), key="v6_c")
+        t_size = st.selectbox("Weight Size Determined By", numeric_cols, key="v6_s")
+        
+        fig6 = px.treemap(df, path=[t_parent, t_child], values=t_size, title=f"Proportional Matrix Hierarchy: {t_parent} -> {t_child}")
+        st.plotly_chart(fig6, use_container_width=True)
+        
+        t1, t2 = st.tabs(["📊 Power BI Setup Blueprint", "🐍 Python Snippet"])
+        with t1:
+            st.markdown(f"** using the sidebar or the box above to generate your dashboard.")
