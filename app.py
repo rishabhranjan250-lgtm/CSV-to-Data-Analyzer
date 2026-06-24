@@ -258,4 +258,111 @@ fig.show()
         box_num = st.selectbox("Analyze Variance of (Y)", numeric_cols, key="v7_y")
         
         fig7 = px.box(active_df, x=box_cat, y=box_num, points="all", title=f"Quartile Spread of {box_num} by {box_cat}", template="plotly_white")
-        st.plotly_chart(fig7, use_container_
+        st.plotly_chart(fig7, use_container_width=True)
+        
+        t1, t2 = st.tabs(["📊 Power BI Setup Blueprint", "🐍 Python Snippet"])
+        with t1:
+            st.markdown(f"**Visual Type:** Box and Whisker plot\n* **Category:** `{box_cat}`\n* **Y Axis:** `{box_num}`")
+        with t2:
+            st.markdown(f"```python\nfig = px.box(df, x='{box_cat}', y='{box_num}', points='all')\nfig.show()\n```")
+
+    # 5. GLOBAL AUTOMATED INSIGHTS & OUTCOMES
+    st.markdown("---")
+    st.header("💡 5. Executive Summary & PDF Report Generator")
+    
+    # --- SAFE MATHEMATICAL CALCULATIONS FOR INSIGHTS ---
+    outliers_count = 0
+    target_col = numeric_cols[0] if len(numeric_cols) > 0 else "N/A"
+    if len(numeric_cols) > 0:
+        q1 = active_df[target_col].quantile(0.25)
+        q3 = active_df[target_col].quantile(0.75)
+        safe_iqr = q3 - q1  
+        outliers_count = active_df[(active_df[target_col] < (q1 - 1.5 * safe_iqr)) | (active_df[target_col] > (q3 + 1.5 * safe_iqr))].shape[0]
+
+    top_cat = categorical_cols[0] if len(categorical_cols) > 0 else "N/A"
+    mode_val = active_df[top_cat].mode()[0] if len(categorical_cols) > 0 and not active_df[top_cat].dropna().empty else "N/A"
+    mode_pct = (active_df[active_df[top_cat] == mode_val].shape[0] / active_df.shape[0]) * 100 if len(categorical_cols) > 0 else 0
+
+    corr_val = 0.0
+    top_pair = ("N/A", "N/A")
+    if len(numeric_cols) >= 2:
+        corr_matrix = active_df[numeric_cols].corr()
+        pairs = corr_matrix.unstack().sort_values(ascending=False).drop_duplicates()
+        valid_pairs = pairs[pairs < 1.0]
+        if not valid_pairs.empty:
+            corr_val = valid_pairs.iloc[0]
+            top_pair = valid_pairs.index[0]
+
+    total_nulls = active_df.isna().sum().sum()
+
+    # Display insights columns cleanly on page
+    ins_col1, ins_col2 = st.columns(2)
+    with ins_col1:
+        st.subheader("📊 Operational Highlights")
+        st.write(f"* Extreme variance entries in `{target_col}`: **{outliers_count} outliers**")
+        st.write(f"* Top Category segment volume: **`{mode_val}`** ({mode_pct:.1f}%)")
+    with ins_col2:
+        st.subheader("📈 Relational & Structural Metrics")
+        st.write(f"* Top numeric correlation: **{corr_val:.2f}** (between `{top_pair[0]}` and `{top_pair[1]}`)")
+        st.write(f"* Data Integrity: **{total_nulls} missing items** found.")
+
+    # --- THE REPORTLAB PDF GENERATION ENGINE ---
+    def generate_pdf_report():
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=40, leftMargin=40, topMargin=40, bottomMargin=40)
+        story = []
+        
+        styles = getSampleStyleSheet()
+        title_style = ParagraphStyle('TitleStyle', parent=styles['Heading1'], fontSize=24, spaceAfter=20, textColor=colors.HexColor('#1E3A8A'))
+        h2_style = ParagraphStyle('H2Style', parent=styles['Heading2'], fontSize=16, spaceBefore=15, spaceAfter=10, textColor=colors.HexColor('#1F2937'))
+        body_style = ParagraphStyle('BodyStyle', parent=styles['Normal'], fontSize=11, leading=16, spaceAfter=8)
+        
+        # Header Document Details
+        story.append(Paragraph("📊 Deep-Dive Executive Data Analysis Report", title_style))
+        story.append(Paragraph(f"<b>Target Scope Matrix:</b> {active_name}", body_style))
+        story.append(Spacer(1, 15))
+        
+        # 1. Dataset Shape Matrix Table
+        story.append(Paragraph("1. Data Structure Dimensions", h2_style))
+        dimension_data = [
+            ["Metric Attribute", "Value Scope Count"],
+            ["Total Analyzed Records (Rows)", f"{active_df.shape[0]:,}"],
+            ["Total Fields Map (Columns)", str(active_df.shape[1])],
+            ["Numerical Attributes Identified", str(len(numeric_cols))],
+            ["Categorical Text Fields Map", str(len(categorical_cols))]
+        ]
+        t1 = Table(dimension_data, colWidths=[250, 150])
+        t1.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (1,0), colors.HexColor('#F3F4F6')),
+            ('TEXTCOLOR', (0,0), (1,0), colors.HexColor('#111827')),
+            ('FONTNAME', (0,0), (1,0), 'Helvetica-Bold'),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+            ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#E5E7EB'))
+        ]))
+        story.append(t1)
+        story.append(Spacer(1, 15))
+        
+        # 2. Key Calculated Insight Narrative
+        story.append(Paragraph("2. Strategic Findings & Algorithmic Anomalies", h2_style))
+        story.append(Paragraph(f"• <b>Structural Outlier Detection:</b> Analyzed target matrix <i>{target_col}</i> which returned <b>{outliers_count}</b> specific entries passing outside standard interquartile limits.", body_style))
+        story.append(Paragraph(f"• <b>Segment Dominance:</b> Field column <i>{top_cat}</i> points to <b>{mode_val}</b> as the core segment vector volume, taking up roughly <b>{mode_pct:.2f}%</b> of total density distributions.", body_style))
+        if len(numeric_cols) >= 2:
+            story.append(Paragraph(f"• <b>Pearson Correlation Insight:</b> The highest positive tracking pair is verified between <i>{top_pair[0]}</i> and <i>{top_pair[1]}</i> showing a scalar value of <b>{corr_val:.2f}</b>.", body_style))
+        story.append(Paragraph(f"• <b>Data Pipeline Integrity:</b> Found a cumulative sum of <b>{total_nulls}</b> empty or missing data blocks inside the combined active modeling workspace.", body_style))
+        
+        doc.build(story)
+        buffer.seek(0)
+        return buffer.getvalue()
+
+    # Trigger Download Button
+    st.markdown("---")
+    pdf_data = generate_pdf_report()
+    st.download_button(
+        label="📥 Download Full Analytical Report (PDF)",
+        data=pdf_data,
+        file_name=f"Executive_Analysis_Report_{active_name}.pdf",
+        mime="application/pdf"
+    )
+
+else:
+    st.info("💡 Drop one or multiple `.csv` dataset files above to trigger automated visualization engines, schemas, and analytics reports.")
