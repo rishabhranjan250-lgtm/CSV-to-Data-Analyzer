@@ -148,9 +148,6 @@ for col in numeric_df.columns:
     # ----------------------------------------------------
     # VISUAL 4: SCATTER PLOT (Correlation & Distribution)
     # ----------------------------------------------------
-    # ----------------------------------------------------
-    # VISUAL 4: SCATTER PLOT (Correlation & Distribution)
-    # ----------------------------------------------------
     if len(numeric_cols) >= 2:
         st.markdown("---")
         st.markdown("### 🎯 4. Scatter Plot (Variable Interaction & Correlations)")
@@ -168,7 +165,6 @@ for col in numeric_df.columns:
 * **Y Axis:** `{s_y}` (Click arrow -> Select **Don't Summarize**)
 * **Legend:** `{s_color if s_color else 'Leave Empty'}`"""
             st.markdown(powerbi_blueprint)
-            
         with t2:
             color_argument = f"color='{s_color}', " if s_color else ""
             python_scatter_code = f"""```python
@@ -180,3 +176,109 @@ fig = px.scatter(df, x='{s_x}', y='{s_y}', {color_argument}title='Scatter Plot M
 fig.show()
 ```"""
             st.markdown(python_scatter_code)
+
+    # ----------------------------------------------------
+    # VISUAL 5: HISTOGRAM (Numeric Density/Distribution)
+    # ----------------------------------------------------
+    if len(numeric_cols) > 0:
+        st.markdown("---")
+        st.markdown("### 📊 5. Histogram (Data Density & Outlier Detection)")
+        h_val = st.selectbox("Select Numerical Target for Sizing Tiers", numeric_cols, key="v5_h")
+        
+        fig5 = px.histogram(df, x=h_val, marginal="box", title=f"Frequency Concentration of {h_val}", template="plotly_white")
+        st.plotly_chart(fig5, use_container_width=True)
+        
+        t1, t2 = st.tabs(["📊 Power BI Setup Blueprint", "🐍 Python Snippet"])
+        with t1:
+            st.markdown(f"**Visual Type:** Normal Column Chart combined with Data Groups\n1. In the Fields list, right-click `{h_val}` and choose **New group**.\n2. Set **Group type** to **Bins** and choose your Bin Size.\n3. Drag the new Binned column to the **X-Axis** and the original `{h_val}` (Set aggregation to **Count**) to the **Y-Axis**.")
+        with t2:
+            st.markdown(f"```python\nfig = px.histogram(df, x='{h_val}', marginal='box', title='Distribution Curve')\nfig.show()\n```")
+
+    # ----------------------------------------------------
+    # VISUAL 6: TREEMAP (Hierarchical Structuring)
+    # ----------------------------------------------------
+    if len(categorical_cols) >= 2 and len(numeric_cols) > 0:
+        st.markdown("---")
+        st.markdown("### 🧱 6. Treemap (Hierarchical Category Matrix)")
+        t_parent = st.selectbox("Select Top-Level Category (Parent)", categorical_cols, index=0, key="v6_p")
+        t_child = st.selectbox("Select Sub-Category (Child)", categorical_cols, index=min(1, len(categorical_cols)-1), key="v6_c")
+        t_size = st.selectbox("Weight Size Determined By", numeric_cols, key="v6_s")
+        
+        fig6 = px.treemap(df, path=[t_parent, t_child], values=t_size, title=f"Proportional Matrix Hierarchy: {t_parent} -> {t_child}")
+        st.plotly_chart(fig6, use_container_width=True)
+        
+        t1, t2 = st.tabs(["📊 Power BI Setup Blueprint", "🐍 Python Snippet"])
+        with t1:
+            st.markdown(f"**Visual Type:** Treemap\n* **Category:** Drag `{t_parent}` first, then drag `{t_child}` right underneath it inside the same Category bucket.\n* **Values:** `{t_size}`")
+        with t2:
+            st.markdown(f"```python\nfig = px.treemap(df, path=['{t_parent}', '{t_child}'], values='{t_size}')\nfig.show()\n```")
+
+    # ----------------------------------------------------
+    # VISUAL 7: BOX PLOT (Statistical Summary)
+    # ----------------------------------------------------
+    if len(categorical_cols) > 0 and len(numeric_cols) > 0:
+        st.markdown("---")
+        st.markdown("### 📦 7. Box & Whisker Plot (Statistical Spread / Percentiles)")
+        box_cat = st.selectbox("Group Spread Across Categories (X)", categorical_cols, key="v7_x")
+        box_num = st.selectbox("Analyze Variance of Numeric Target (Y)", numeric_cols, key="v7_y")
+        
+        fig7 = px.box(df, x=box_cat, y=box_num, points="all", title=f"Statistical Quartile Distribution of {box_num} across {box_cat}", template="plotly_white")
+        st.plotly_chart(fig7, use_container_width=True)
+        
+        t1, t2 = st.tabs(["📊 Power BI Setup Blueprint", "🐍 Python Snippet"])
+        with t1:
+            st.markdown(f"**Visual Type:** Box and Whisker plot\n* **Category:** `{box_cat}`\n* **Y Axis:** `{box_num}`")
+        with t2:
+            st.markdown(f"```python\nfig = px.box(df, x='{box_cat}', y='{box_num}', points='all')\nfig.show()\n```")
+
+    # ----------------------------------------------------
+    # SECTION 4: GLOBAL AUTOMATED INSIGHTS & OUTCOMES
+    # ----------------------------------------------------
+    st.markdown("---")
+    st.header("💡 4. Executive Summary: Main Insights & Key Outcomes")
+    st.write("Based on algorithmic calculations across the metrics, here is your executive data summary:")
+
+    ins_col1, ins_col2 = st.columns(2)
+
+    with ins_col1:
+        st.subheader("📊 Key Operational Highlights")
+        
+        if len(numeric_cols) > 0:
+            target_col = numeric_cols[0]
+            q1 = df[target_col].quantile(0.25)
+            q3 = df[target_col].quantile(0.75)
+            iqr = q3 - q1
+            outliers_count = df[(df[target_col] < (q1 - 1.5 * iqr)) | (df[target_col] > (q3 + 1.5 * iqr))].shape[0]
+            if outliers_count > 0:
+                st.markdown(f"* 🚨 **Anomaly Alert**: Found **{outliers_count} extreme variance entries (outliers)** inside the `{target_col}` column. These represent critical spikes or drops requiring verification.")
+            else:
+                st.markdown(f"* ✅ **Data Stability**: The metric `{target_col}` shows zero massive structural anomalies, suggesting consistent operational tracking.")
+        
+        if len(categorical_cols) > 0:
+            top_cat = categorical_cols[0]
+            mode_val = df[top_cat].mode()[0]
+            mode_pct = (df[df[top_cat] == mode_val].shape[0] / df.shape[0]) * 100
+            st.markdown(f"* 🎯 **Dominant Segments**: Category value **`{mode_val}`** heavily controls the `{top_cat}` metric, accounting for **{mode_pct:.1f}%** of all documented rows.")
+
+    with ins_col2:
+        st.subheader("📈 Statistical Correlations & Trends")
+        
+        if len(numeric_cols) >= 2:
+            corr_matrix = df[numeric_cols].corr()
+            pairs = corr_matrix.unstack().sort_values(ascending=False).drop_duplicates()
+            valid_pairs = pairs[pairs < 1.0]
+            
+            if not valid_pairs.empty and valid_pairs.iloc[0] > 0.4:
+                top_pair = valid_pairs.index[0]
+                st.markdown(f"* 🤝 **Strong Relationship**: A measurable correlation (**{valid_pairs.iloc[0]:.2f}**) exists between **`{top_pair[0]}`** and **`{top_pair[1]}`**. Changes in one metric directly hint at shifts in the other.")
+            else:
+                st.markdown("* 🔍 **Independent Metrics**: No strong mathematical correlations were detected across numerical vectors. Fields move independently of one another.")
+        
+        total_nulls = df.isna().sum().sum()
+        if total_nulls > 0:
+            st.markdown(f"* ⚙️ **Data Quality Note**: There are **{total_nulls} blank/missing cells** detected. It's recommended to run standard imputation or Power Query filtering before dashboard deployment.")
+        else:
+            st.markdown("* 💎 **Data Integrity**: 100% complete dataset. There are zero null or blank cells across all columns, making this perfectly ready for Power BI star-schema modeling.")
+
+else:
+    st.info("💡 Drop a `.csv` dataset file above to unlock the 7 automated visualization engines.")
