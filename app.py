@@ -2,6 +2,10 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import io
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
 
 # Page Configuration
 st.set_page_config(page_title="Ultimate Relational BI & Python Engine", layout="wide", page_icon="🚀")
@@ -226,89 +230,3 @@ fig.show()
         t1, t2 = st.tabs(["📊 Power BI Setup Blueprint", "🐍 Python Snippet"])
         with t1:
             st.markdown(f"**Visual Type:** Column Chart with Bins\n1. Right-click `{h_val}` -> **New group**.\n2. Set **Group type** to **Bins**.\n3. Drag the Binned column to the **X-Axis** and the original column (Set to **Count**) to the **Y-Axis**.")
-        with t2:
-            st.markdown(f"```python\nfig = px.histogram(df, x='{h_val}', marginal='box')\nfig.show()\n```")
-
-    # VISUAL 6: TREEMAP
-    if len(categorical_cols) >= 2 and len(numeric_cols) > 0:
-        st.markdown("---")
-        st.markdown("### 🧱 6. Treemap (Hierarchical Category Matrix)")
-        t_parent = st.selectbox("Select Parent Category", categorical_cols, index=0, key="v6_p")
-        t_child = st.selectbox("Select Child Category", categorical_cols, index=min(1, len(categorical_cols)-1), key="v6_c")
-        t_size = st.selectbox("Weight Determined By", numeric_cols, key="v6_s")
-        
-        fig6 = px.treemap(active_df, path=[t_parent, t_child], values=t_size, title=f"Hierarchy Matrix: {t_parent} -> {t_child}")
-        st.plotly_chart(fig6, use_container_width=True)
-        
-        t1, t2 = st.tabs(["📊 Power BI Setup Blueprint", "🐍 Python Snippet"])
-        with t1:
-            st.markdown(f"**Visual Type:** Treemap\n* **Category:** Drag `{t_parent}` first, then `{t_child}` right underneath it.\n* **Values:** `{t_size}`")
-        with t2:
-            st.markdown(f"```python\nfig = px.treemap(df, path=['{t_parent}', '{t_child}'], values='{t_size}')\nfig.show()\n```")
-
-    # VISUAL 7: BOX PLOT
-    if len(categorical_cols) > 0 and len(numeric_cols) > 0:
-        st.markdown("---")
-        st.markdown("### 📦 7. Box & Whisker Plot (Statistical Spread)")
-        box_cat = st.selectbox("Group Spread Across Categories (X)", categorical_cols, key="v7_x")
-        box_num = st.selectbox("Analyze Variance of (Y)", numeric_cols, key="v7_y")
-        
-        fig7 = px.box(active_df, x=box_cat, y=box_num, points="all", title=f"Quartile Spread of {box_num} by {box_cat}", template="plotly_white")
-        st.plotly_chart(fig7, use_container_width=True)
-        
-        t1, t2 = st.tabs(["📊 Power BI Setup Blueprint", "🐍 Python Snippet"])
-        with t1:
-            st.markdown(f"**Visual Type:** Box and Whisker plot\n* **Category:** `{box_cat}`\n* **Y Axis:** `{box_num}`")
-        with t2:
-            st.markdown(f"```python\nfig = px.box(df, x='{box_cat}', y='{box_num}', points='all')\nfig.show()\n```")
-
-    # 5. GLOBAL AUTOMATED INSIGHTS & OUTCOMES
-    st.markdown("---")
-    st.header("💡 5. Executive Summary: Main Insights & Key Outcomes")
-    st.write("Algorithmic summaries executed across your active data matrix:")
-
-    ins_col1, ins_col2 = st.columns(2)
-
-    with ins_col1:
-        st.subheader("📊 Key Operational Highlights")
-        if len(numeric_cols) > 0:
-            target_col = numeric_cols[0]
-            q1 = active_df[target_col].quantile(0.25)
-            q3 = active_df[target_col].quantile(0.75)
-            iqr = q3 - iqr if 'iqr' in locals() else (q3 - q1)
-            outliers_count = active_df[(active_df[target_col] < (q1 - 1.5 * iqr)) | (active_df[target_col] > (q3 + 1.5 * iqr))].shape[0]
-            if outliers_count > 0:
-                st.markdown(f"* 🚨 **Anomaly Alert**: Found **{outliers_count} extreme variance entries (outliers)** inside the `{target_col}` column. These represent critical spikes requiring validation.")
-            else:
-                st.markdown(f"* ✅ **Data Stability**: The metric `{target_col}` shows zero massive structural anomalies, suggesting consistent operational tracking.")
-        
-        if len(categorical_cols) > 0:
-            top_cat = categorical_cols[0]
-            mode_val = active_df[top_cat].mode()[0]
-            mode_pct = (active_df[active_df[top_cat] == mode_val].shape[0] / active_df.shape[0]) * 100
-            st.markdown(f"* 🎯 **Dominant Segments**: Category value **`{mode_val}`** heavily controls the `{top_cat}` metric, accounting for **{mode_pct:.1f}%** of all documented data points.")
-
-    with ins_col2:
-        st.subheader("📈 Statistical Relationships & Modeling Notes")
-        if len(numeric_cols) >= 2:
-            corr_matrix = active_df[numeric_cols].corr()
-            pairs = corr_matrix.unstack().sort_values(ascending=False).drop_duplicates()
-            valid_pairs = pairs[pairs < 1.0]
-            
-            if not valid_pairs.empty and valid_pairs.iloc[0] > 0.4:
-                top_pair = valid_pairs.index[0]
-                st.markdown(f"* 🤝 **Strong Relationship**: A correlation of **{valid_pairs.iloc[0]:.2f}** exists between **`{top_pair[0]}`** and **`{top_pair[1]}`**. Changes in one explicitly map to shifts in the other.")
-            else:
-                st.markdown("* 🔍 **Independent Metrics**: No strong linear correlations were detected across numerical vectors.")
-        
-        if len(datasets) > 1:
-            st.markdown(f"* 🔗 **Model Integrity**: Active relationship uses a `{how_method}` join mapping `{left_table}`.`{left_key}` onto `{right_table}`.`{right_key}`. Ready for star-schema conversion.")
-
-        total_nulls = active_df.isna().sum().sum()
-        if total_nulls > 0:
-            st.markdown(f"* ⚙️ **Data Quality Note**: There are **{total_nulls} blank/missing cells** remaining in the combined matrix. Filter these in Power Query or use dropna() in Python before visualization.")
-        else:
-            st.markdown("* 💎 **Data Integrity**: 100% complete dataset. Zero null cells across all columns.")
-
-else:
-    st.info("💡 Drop one or multiple `.csv` dataset files above to trigger automated visualization engines, schemas, and analytics reports.")
