@@ -105,8 +105,10 @@ if uploaded_file is not None:
     # ----------------------------------------------------
     # VISUAL 4: SCATTER PLOT (Correlation & Distribution)
     # ----------------------------------------------------
+   # ----------------------------------------------------
+    # VISUAL 4: SCATTER PLOT (Correlation & Distribution)
+    # ----------------------------------------------------
     if len(numeric_cols) >= 2:
-        if len(numeric_cols) >= 2:
         st.markdown("---")
         st.markdown("### 🎯 4. Scatter Plot (Variable Interaction & Correlations)")
         s_x = st.selectbox("Select X-Axis Variable", numeric_cols, index=0, key="v4_x")
@@ -120,7 +122,6 @@ if uploaded_file is not None:
         with t1:
             st.markdown(f"**Visual Type:** Scatter Chart\n* **X Axis:** `{s_x}` (Click arrow -> Select **Don't Summarize**)\n* **Y Axis:** `{s_y}` (Click arrow -> Select **Don't Summarize**)\n* **Legend:** `{s_color if s_color else 'Leave Empty'}`")
         with t2:
-            # Clean string building to prevent f-string quoting conflicts
             color_argument = f"color='{s_color}', " if s_color else ""
             python_scatter_code = f"""```python
 import pandas as pd
