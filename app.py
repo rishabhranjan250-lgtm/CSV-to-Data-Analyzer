@@ -7,7 +7,7 @@ import io
 st.set_page_config(page_title="Ultimate Power BI & Python Code Engine", layout="wide", page_icon="🚀")
 
 st.title("🚀 The Ultimate Automated Analytics & Code Engine")
-st.subheader("Upload any CSV to automatically generate every possible visualization, Power BI blueprint, and Python script.")
+st.subheader("Upload any CSV to automatically generate every possible visualization, Power BI blueprint, Python script, and executive insights.")
 
 uploaded_file = st.file_uploader("Upload your dataset (CSV format)", type="csv")
 
@@ -43,7 +43,7 @@ if uploaded_file is not None:
     with st.expander("📝 View Raw Data Preview (Top 10 Rows)"):
         st.dataframe(df.head(10), use_container_width=True)
 
-    # --- NEW SECTION: FULL PYTHON ENVIRONMENT SCRIPTS ---
+    # --- SECTION 2: FULL PYTHON ENVIRONMENT SCRIPTS ---
     st.markdown("---")
     st.header("🐍 2. Full Python Jupyter Notebook Pipeline")
     st.write("If you want to move beyond basic charts and perform a professional, end-to-end Exploratory Data Analysis (EDA) in Python, copy the script block below.")
@@ -160,72 +160,4 @@ for col in numeric_df.columns:
         
         t1, t2 = st.tabs(["📊 Power BI Setup Blueprint", "🐍 Python Snippet"])
         with t1:
-            st.markdown(f"**Visual Type:** Scatter Chart\n* **X Axis:** `{s_x}` (Click arrow -> Select **Don't Summarize**)\n* **Y Axis:** `{s_y}` (Click arrow -> Select **Don't Summarize**)\n* **Legend:** `{s_color if s_color else 'Leave Empty'}`")
-        with t2:
-            color_argument = f"color='{s_color}', " if s_color else ""
-            python_scatter_code = f"""```python
-import pandas as pd
-import plotly.express as px
-
-df = pd.read_csv('{uploaded_file.name}')
-fig = px.scatter(df, x='{s_x}', y='{s_y}', {color_argument}title='Scatter Plot Matrix')
-fig.show()
-```"""
-            st.markdown(python_scatter_code)
-
-    # ----------------------------------------------------
-    # VISUAL 5: HISTOGRAM (Numeric Density/Distribution Frequency)
-    # ----------------------------------------------------
-    if len(numeric_cols) > 0:
-        st.markdown("---")
-        st.markdown("### 📊 5. Histogram (Data Density & Outlier Detection)")
-        h_val = st.selectbox("Select Numerical Target for Sizing Tiers", numeric_cols, key="v5_h")
-        
-        fig5 = px.histogram(df, x=h_val, marginal="box", title=f"Frequency Concentration of {h_val}", template="plotly_white")
-        st.plotly_chart(fig5, use_container_width=True)
-        
-        t1, t2 = st.tabs(["📊 Power BI Setup Blueprint", "🐍 Python Snippet"])
-        with t1:
-            st.markdown(f"**Visual Type:** Normal Column Chart combined with Data Groups\n1. In the Fields list, right-click `{h_val}` and choose **New group**.\n2. Set **Group type** to **Bins** and choose your Bin Size.\n3. Drag the new Binned column to the **X-Axis** and the original `{h_val}` (Set aggregation to **Count**) to the **Y-Axis**.")
-        with t2:
-            st.markdown(f"```python\nfig = px.histogram(df, x='{h_val}', marginal='box', title='Distribution Curve')\nfig.show()\n```")
-
-    # ----------------------------------------------------
-    # VISUAL 6: TREEMAP (Hierarchical Structuring)
-    # ----------------------------------------------------
-    if len(categorical_cols) >= 2 and len(numeric_cols) > 0:
-        st.markdown("---")
-        st.markdown("### 🧱 6. Treemap (Hierarchical Category Matrix)")
-        t_parent = st.selectbox("Select Top-Level Category (Parent)", categorical_cols, index=0, key="v6_p")
-        t_child = st.selectbox("Select Sub-Category (Child)", categorical_cols, index=min(1, len(categorical_cols)-1), key="v6_c")
-        t_size = st.selectbox("Weight Size Determined By", numeric_cols, key="v6_s")
-        
-        fig6 = px.treemap(df, path=[t_parent, t_child], values=t_size, title=f"Proportional Matrix Hierarchy: {t_parent} -> {t_child}")
-        st.plotly_chart(fig6, use_container_width=True)
-        
-        t1, t2 = st.tabs(["📊 Power BI Setup Blueprint", "🐍 Python Snippet"])
-        with t1:
-            st.markdown(f"**Visual Type:** Treemap\n* **Category:** Drag `{t_parent}` first, then drag `{t_child}` right underneath it inside the same Category bucket.\n* **Values:** `{t_size}`")
-        with t2:
-            st.markdown(f"```python\nfig = px.treemap(df, path=['{t_parent}', '{t_child}'], values='{t_size}')\nfig.show()\n```")
-
-    # ----------------------------------------------------
-    # VISUAL 7: BOX PLOT (Statistical Summary)
-    # ----------------------------------------------------
-    if len(categorical_cols) > 0 and len(numeric_cols) > 0:
-        st.markdown("---")
-        st.markdown("### 📦 7. Box & Whisker Plot (Statistical Spread / Percentiles)")
-        box_cat = st.selectbox("Group Spread Across Categories (X)", categorical_cols, key="v7_x")
-        box_num = st.selectbox("Analyze Variance of Numeric Target (Y)", numeric_cols, key="v7_y")
-        
-        fig7 = px.box(df, x=box_cat, y=box_num, points="all", title=f"Statistical Quartile Distribution of {box_num} across {box_cat}", template="plotly_white")
-        st.plotly_chart(fig7, use_container_width=True)
-        
-        t1, t2 = st.tabs(["📊 Power BI Setup Blueprint", "🐍 Python Snippet"])
-        with t1:
-            st.markdown(f"**Visual Type:** Box and Whisker plot\n* **Category:** `{box_cat}`\n* **Y Axis:** `{box_num}`")
-        with t2:
-            st.markdown(f"```python\nfig = px.box(df, x='{box_cat}', y='{box_num}', points='all')\nfig.show()\n```")
-
-else:
-    st.info("💡 Drop a `.csv` dataset file above to unlock the 7 automated visualization engines.")
+            st.markdown(f"**Visual Type:** Scatter Chart\n* **X Axis:** `{s_x}` (Click arrow -> Select **Don't Summarize**)\n
